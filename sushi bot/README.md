@@ -1,0 +1,1 @@
+Simple Python bot to play [Sushi Go Round](http://www.miniclip.com/games/sushi-go-round/en/) based on the tutorial [here](http://hub.tutsplus.com/tutorials/how-to-build-a-python-bot-that-can-play-web-games--active-11117) and expanded to keep playing past what the tutorial tells you.
