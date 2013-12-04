@@ -15,7 +15,20 @@ two_month_ago = last_month.replace(day=1) - timedelta(days=1)
 
 seen_ip = []
 seen_user = []
-banned_ip = []
+banned_ip = {}
+
+def tz_setup():
+    if time.localtime().tm_isdst:
+        displayed_time = time.tzname[time.daylight]
+        time_offset = (time.altzone * -1) / 3600
+    else:
+        displayed_time = time.tzname[0]
+        time_offset = (time.timezone * -1) / 3600
+
+    if time_offset > 0:
+        time_offset = '+{}'.format(time_offset)
+
+    return displayed_time, time_offset
 
 for i in os.listdir(log_dir):
     if 'auth.log' in i or 'fail2ban.log' in i:
@@ -31,21 +44,34 @@ for i in os.listdir(log_dir):
                 file_content = f.read()
                 split_text = file_content.split('\n')
                 for j in split_text:
-                    m = re.search(search_string, j)
-                    if m:
-                        if m.group('log_date')[:3] == last_month:
-                            seen_ip.append(m.group('ip_add'))
-                            seen_user.append(m.group('user'))
+                    if auth_log:
+                        m = re.search(search_string, j)
+                        if m:
+                            if m.group('log_date')[:3] == last_month.strftime('%b'):
+                                seen_ip.append(m.group('ip_add'))
+                                seen_user.append(m.group('user'))
+                    else:
+                        m = re.search(fail2ban_search_string, j)
+                        if m:
+                                b_time = datetime.strptime(m.group('log_date'),
+                                            '%Y-%m-%d %H:%M:%S,%f')
+                                banned_ip[b_time] = m.group('ip_add')
             else:
                 with open(os.path.join(log_dir, i), 'r') as f:
                     for line in f:
                         if auth_log:
                             m = re.search(search_string, line)
                             if m:
-                                if m.group('log_date')[:3] == last_month:
+                                if m.group('log_date')[:3] == last_month.strftime('%b'):
                                     seen_ip.append(m.group('ip_add'))
                                     seen_user.append(m.group('user'))
                         else:
                             m = re.search(fail2ban_search_string, line)
                             if m:
-                                pass
+                                b_time = datetime.strptime(m.group('log_date'),
+                                            '%Y-%m-%d %H:%M:%S,%f')
+                                banned_ip[b_time] = m.group('ip_add')
+
+if __name__ == '__main__':
+
+    displayed_time, time_offset = tz_setup()
