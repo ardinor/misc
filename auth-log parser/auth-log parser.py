@@ -2,7 +2,11 @@ import re
 import gzip
 import os
 import time
+import json
+import urllib, urllib2
 from datetime import date, timedelta, datetime
+
+from settings import API_URL, API_KEY
 
 search_string = '(?P<log_date>^.*) defestri sshd.*Invalid user (?P<user>.*) from (?P<ip_add>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
 #log_dir = 'C:/Temp/log'
@@ -29,6 +33,17 @@ def tz_setup():
         time_offset = '+{}'.format(time_offset)
 
     return displayed_time, time_offset
+
+def check_ip_location(ip):
+    params = {'format': 'json', 'key': API_KEY, 'ip': ip, 'timezone': 'false'}
+    url_params = urllib.urlencode(params)
+    url = API_URL + '?' + url_params
+    url_obj = urllib2.urlopen(url)
+    response = url_obj.read()
+    url_obj.close()
+    response_dict = json.loads(response)
+
+    return response_dict
 
 for i in os.listdir(log_dir):
     if 'auth.log' in i or 'fail2ban.log' in i:
