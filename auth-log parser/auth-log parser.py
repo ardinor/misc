@@ -4,15 +4,15 @@ import os
 import time
 import json
 import urllib, urllib2
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
+from jinja2 import Environment, FileSystemLoader
 
-from settings import API_URL, API_KEY, LOG_DIR
+from settings import API_URL, API_KEY, LOG_DIR, SEARCH_STRING, FAIL2BAN_SEARCH_STRING
 
-search_string = '(?P<log_date>^.*) defestri sshd.*Invalid user (?P<user>.*) from (?P<ip_add>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-#log_dir = 'C:/Temp/log'
+DIR = os.path.dirname(os.path.realpath(__file__))
 
-fail2ban_search_string = '(?P<log_date>^.*) fail2ban.actions: WARNING \[ssh] Ban (?P<ip_add>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
-
+env = Environment(loader=FileSystemLoader(DIR))
+template = env.get_template('template.html')
 
 def tz_setup():
     if time.localtime().tm_isdst:
@@ -48,14 +48,42 @@ def check_ip_location(ip):
 
     return return_dict
 
+def parse_content(content, breakin_attempt, banned_ip, last_month, auth_log):
+
+    for j in content:
+        if auth_log:
+            m = re.search(SEARCH_STRING, j)
+            if m:
+                if m.group('log_date')[:3] == last_month.strftime('%b'):
+                    log_date = datetime.strptime(m.group('log_date'), '%b %d %H:%M:%S')
+                    log_date = log_date.replace(year=last_month.year)
+                    #sometimes there's multiple entries per second, since we're
+                    #not that concerned about to the second accuracy just increment
+                    #the seconds until we find a unique log date to put in
+                    if log_date in breakin_attempt:
+                        while log_date in breakin_attempt:
+                            ns = log_date.second+1
+                            if ns >= 60:
+                                ns = 0
+                            log_date = log_date.replace(second=ns)
+                    breakin_attempt[log_date] = (m.group('ip_add'), m.group('user'))
+
+        else:
+            m = re.search(FAIL2BAN_SEARCH_STRING, j)
+            if m:
+                    b_time = datetime.strptime(m.group('log_date'),
+                                '%Y-%m-%d %H:%M:%S,%f')
+                    banned_ip[b_time] = m.group('ip_add')
+
+
+    return breakin_attempt, banned_ip
+
 def read_logs(log_dir):
 
-    #seen_ip = []
-    #seen_user = []
     banned_ip = {}
     breakin_attempt = {}
 
-    last_month = date.today().replace(day=1) - timedelta(days=1) #.strftime('%b')
+    last_month = datetime.now().replace(day=1) - timedelta(days=1) #.strftime('%b')
     two_month_ago = last_month.replace(day=1) - timedelta(days=1)
 
     for i in os.listdir(log_dir):
@@ -71,42 +99,43 @@ def read_logs(log_dir):
                     f = gzip.open(os.path.join(log_dir, i), 'r')
                     file_content = f.read()
                     split_text = file_content.split('\n')
-                    for j in split_text:
-                        if auth_log:
-                            m = re.search(search_string, j)
-                            if m:
-                                if m.group('log_date')[:3] == last_month.strftime('%b'):
-                                    #sometimes there's multiple entries per second... maybe increment a second?
-                                    log_date = datetime.datetime.strptime(m.group('log_date'), '%b %d %H:%M:%S')
-                                    log_date = log_date.replace(year=last_month.year)
-                                    breakin_attempt[log_date] = (m.group('ip_add'), m.group('user'))
-                                    #seen_ip.append(m.group('ip_add'))
-                                    #seen_user.append(m.group('user'))
-                        else:
-                            m = re.search(fail2ban_search_string, j)
-                            if m:
-                                    b_time = datetime.strptime(m.group('log_date'),
-                                                '%Y-%m-%d %H:%M:%S,%f')
-                                    banned_ip[b_time] = m.group('ip_add')
+                    breakin_attempt, banned_ip = parse_content(split_text,
+                                                               breakin_attempt,
+                                                               banned_ip,
+                                                               last_month,
+                                                               auth_log)
+
                 else:
                     with open(os.path.join(log_dir, i), 'r') as f:
-                        for line in f:
-                            if auth_log:
-                                m = re.search(search_string, line)
-                                if m:
-                                    if m.group('log_date')[:3] == last_month.strftime('%b'):
-                                        log_date = datetime.datetime.strptime(m.group('log_date'), '%b %d %H:%M:%S')
-                                        log_date = log_date.replace(year=last_month.year)
-                                        breakin_attempt[log_date] = (m.group('ip_add'), m.group('user'))
-                                        #seen_ip.append(m.group('ip_add'))
-                                        #seen_user.append(m.group('user'))
-                            else:
-                                m = re.search(fail2ban_search_string, line)
-                                if m:
-                                    b_time = datetime.strptime(m.group('log_date'),
-                                                '%Y-%m-%d %H:%M:%S,%f')
-                                    banned_ip[b_time] = m.group('ip_add')
+                        breakin_attempt, banned_ip = parse_content(f,
+                                                                   breakin_attempt,
+                                                                   banned_ip,
+                                                                   last_month,
+                                                                   auth_log)
+
+    return breakin_attempt, banned_ip
+
 
 if __name__ == '__main__':
 
+    last_month = datetime.now().replace(day=1) - timedelta(days=1)
     displayed_time, time_offset = tz_setup()
+    breakin_attempt, banned_ip = read_logs(LOG_DIR)
+    unique_ips = set()
+    for i in breakin_attempt.values():
+        unique_ips.add(i[0])
+    ip_and_location = {}
+    for i in unique_ips:
+        ip_and_location[i] = check_ip_location(i)
+        # be a good citizen and only hit the site every two seconds
+        time.sleep(2)
+
+    output_parsed_template = template.render(displayed_time=displayed_time,
+                                             time_offset=time_offset,
+                                             last_month=last_month,
+                                             breakin_attempts=breakin_attempt,
+                                             bans=banned_ip,
+                                             ips=ip_and_location)
+
+    with open(os.path.join(DIR, 'index.html', 'wb')) as f:
+        f.write(output_parsed_template)
