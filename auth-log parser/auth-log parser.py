@@ -3,6 +3,7 @@ import gzip
 import os
 import time
 import json
+import codecs
 import urllib, urllib2
 from datetime import timedelta, datetime
 from jinja2 import Environment, FileSystemLoader
@@ -40,9 +41,9 @@ def check_ip_location(ip):
 
     return_dict = {}
 
-    if 'cityName' in response_dict:
-        return_dict['region'] = response_dict['cityName'] + ', ' + response_dict['regionName']
-    else:
+    if 'cityName' in response_dict and response_dict['cityName'] != '-':
+        return_dict['region'] = response_dict['cityName'] + u', ' + response_dict['regionName']
+    elif response_dict['regionName'] != '-':
         return_dict['region'] = response_dict['regionName']
 
     return_dict['county'] = response_dict['countryName']
@@ -74,7 +75,8 @@ def parse_content(content, breakin_attempt, banned_ip, last_month, auth_log):
             if m:
                     b_time = datetime.strptime(m.group('log_date'),
                                 '%Y-%m-%d %H:%M:%S,%f')
-                    banned_ip[b_time] = m.group('ip_add')
+                    if b_time.month == last_month.month:
+                        banned_ip[b_time] = m.group('ip_add')
 
 
     return breakin_attempt, banned_ip
@@ -143,7 +145,7 @@ if __name__ == '__main__':
                                              bans=banned_ip,
                                              ips=ip_and_location)
 
-    with open(os.path.join(DIR, 'index.html'), 'wb') as f:
+    with codecs.open(os.path.join(DIR, 'index.html'), encoding='utf-8', mode='wb') as f:
         f.write(output_parsed_template)
 
     print 'Finished!'

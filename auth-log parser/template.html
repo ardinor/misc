@@ -57,7 +57,7 @@
                 <td>{{ details[1] }}</td>
                 <td>{{ details[0] }}</td>
                 {% if details[0] in ips %}
-                <td>{{ ', '.join(ips[details[0]].values()) }}</td>
+                <td>{{ u', '.join(ips[details[0]].values()) }}</td>
                 {% else %}
                 <td>...</td>
                 {% endif %}
@@ -79,10 +79,10 @@
 
             {% for ban_date, ip_add in bans.iteritems() %}
             <tr>
-                <td>{{ ban_date }}</td>
+                <td>{{ ban_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                 <td>{{ ip_add }}</td>
                 {% if ip_add in ips %}
-                <td>{{ ', '.join(ips[ip_add].values()) }}</td>
+                <td>{{ u', '.join(ips[ip_add].values()) }}</td>
                 {% else %}
                 <td>...</td>
                 {% endif %}
