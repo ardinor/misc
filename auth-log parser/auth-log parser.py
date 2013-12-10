@@ -30,6 +30,7 @@ def tz_setup():
 def check_ip_location(ip):
 
     params = {'format': 'json', 'key': API_KEY, 'ip': ip, 'timezone': 'false'}
+    print 'Checking IP - {}'.format(ip)
     url_params = urllib.urlencode(params)
     url = API_URL + '?' + url_params
     url_obj = urllib2.urlopen(url)
@@ -44,7 +45,7 @@ def check_ip_location(ip):
     else:
         return_dict['region'] = response_dict['regionName']
 
-    return_dict['county'] = return_dict['countryName']
+    return_dict['county'] = response_dict['countryName']
 
     return return_dict
 
@@ -118,18 +119,23 @@ def read_logs(log_dir):
 
 if __name__ == '__main__':
 
+    print 'Begin.'
     last_month = datetime.now().replace(day=1) - timedelta(days=1)
+    print 'Timezone setup...'
     displayed_time, time_offset = tz_setup()
+    print 'Reading logs...'
     breakin_attempt, banned_ip = read_logs(LOG_DIR)
     unique_ips = set()
     for i in breakin_attempt.values():
         unique_ips.add(i[0])
     ip_and_location = {}
+    print 'Checking IP locations...'
     for i in unique_ips:
         ip_and_location[i] = check_ip_location(i)
         # be a good citizen and only hit the site every two seconds
         time.sleep(2)
 
+    print 'Building output...'
     output_parsed_template = template.render(displayed_time=displayed_time,
                                              time_offset=time_offset,
                                              last_month=last_month,
@@ -137,5 +143,7 @@ if __name__ == '__main__':
                                              bans=banned_ip,
                                              ips=ip_and_location)
 
-    with open(os.path.join(DIR, 'index.html', 'wb')) as f:
+    with open(os.path.join(DIR, 'index.html'), 'wb') as f:
         f.write(output_parsed_template)
+
+    print 'Finished!'
