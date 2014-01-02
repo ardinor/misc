@@ -1,10 +1,11 @@
 #!/bin/bash
 
-FILE=/var/www/defestri/httpdocs/bans/index.html
-NEW_NAME=date --date="last month" +%b-%Y".html"
+OUT_DIR=/var/www/defestri/httpdocs/bans/
+FILE=$OUT_DIR'index.html'
+NEW_NAME=$OUT_DIR`date --date="last month" +%b-%Y`'.html'
 NEW_INDEX="/home/jordan/scripts/auth-log parser/index.html"
 
-if [-f $FILE]; then
+if [ -f $FILE ]; then
     echo "Existing file found, moving.."
     mv $FILE $NEW_NAME
 fi
