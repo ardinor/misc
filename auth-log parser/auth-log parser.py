@@ -5,6 +5,7 @@ import time
 import json
 import codecs
 import urllib, urllib2
+import pytz
 from datetime import timedelta, datetime
 from jinja2 import Environment, FileSystemLoader
 
@@ -25,8 +26,22 @@ def tz_setup():
 
     if time_offset > 0:
         time_offset = '+{}'.format(time_offset)
+		
+	#Get zone info (aka just set the system time to UTC already)
+	#a = os.popen("cat /etc/sysconfig/clock | grep ZONE")  # RHEL
+	a = os.popen("cat /etc/timezone")  # Debian
+	cat_res = a.read()
+	if cat_res:
+		cat_res = cat_res.replace('ZONE="', '')
+		cat_res = cat_res.replace('"\n', '')
+		try:
+			sys_tz = pytz.timezone(cat_res)
+		except pytz.UnknownTimeZoneError:
+			# Couldn't get the time zone properly
+			sys_tz = None
+		
 
-    return displayed_time, time_offset
+    return displayed_time, time_offset, sys_tz
 
 def check_ip_location(ip):
 
@@ -59,6 +74,9 @@ def parse_content(content, breakin_attempt, banned_ip, last_month, auth_log):
                 if m.group('log_date')[:3] == last_month.strftime('%b'):
                     log_date = datetime.strptime(m.group('log_date'), '%b %d %H:%M:%S')
                     log_date = log_date.replace(year=last_month.year)
+					#log_date.replace(tzinfo=sys_tz)
+					# Convert it to UTC time
+					#log_date.astimezone(pytz.utc)
                     #sometimes there's multiple entries per second, since we're
                     #not that concerned about to the second accuracy just increment
                     #the seconds until we find a unique log date to put in
@@ -124,7 +142,7 @@ if __name__ == '__main__':
     print 'Begin.'
     last_month = datetime.now().replace(day=1) - timedelta(days=1)
     print 'Timezone setup...'
-    displayed_time, time_offset = tz_setup()
+    displayed_time, time_offset, sys_tz = tz_setup()
     print 'Reading logs...'
     breakin_attempt, banned_ip = read_logs(LOG_DIR)
     unique_ips = set()
