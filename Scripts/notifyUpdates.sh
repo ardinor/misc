@@ -14,9 +14,9 @@ then
         date=$(date)
         subject="$subject $hostname"
         touch email
-        echo -e "To:$to_email" >> test
-        echo -e "From:$from_email" >> test
-        echo -e "Subject:$subject \n" >> test
+        echo -e "To:$to_email" >> email
+        echo -e "From:$from_email" >> email
+        echo -e "Subject:$subject \n" >> email
         echo -e "$uname \n" >> email
         echo -e "Uptime: $uptime\n\n" >> email
         echo -e "Updates found at: $date\n\n" >> email
