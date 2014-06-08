@@ -3,11 +3,19 @@ to_email="<address>"
 from_email="<address>"
 subject="Updates found for "
 
-update_result=$(sudo apt-get --simulate dist-upgrade)
+#Check for other distros?
+#if [[ -f $(which apt-get) ]]
+#then
+#   update_result=$(apt-get --simulate dist-upgrade)
+#   update_found_str="packages will be upgraded"
+#   break
+#elif [[ -f $(which yum) ]]
+#elif [[ -f $(which zypper) ]]
+#elif [[ -f $(which pacman) ]]
+update_result=$(apt-get --simulate dist-upgrade)
 
 if [[ "$update_result" =~ "packages will be upgraded" ]]
 then
-        echo "upgrade found"
         hostname=$(hostname)
         uname=$(uname -a)
         uptime=$(uptime)
