@@ -6,12 +6,18 @@ subject="Updates found for "
 #Check for other distros?
 #if [[ -f $(which apt-get) ]]
 #then
+#   apt-get update
 #   update_result=$(apt-get --simulate dist-upgrade)
 #   update_found_str="packages will be upgraded"
 #   break
 #elif [[ -f $(which yum) ]]
+#then
+#   update_result=$(yum update)
+#   update_found_str=""
+#   break
 #elif [[ -f $(which zypper) ]]
 #elif [[ -f $(which pacman) ]]
+apt-get update
 update_result=$(apt-get --simulate dist-upgrade)
 
 if [[ "$update_result" =~ "packages will be upgraded" ]]
