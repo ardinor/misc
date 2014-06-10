@@ -1,9 +1,21 @@
 #!/bin/bash
+# Checks for available updates and emails notification listing the updates
+# Requires ssmtp to be setup
+# Setup the below two email addresses appropriately
 to_email="<address>"
 from_email="<address>"
+
 subject="Updates found for "
+
 updates_found=false
 error=false
+
+# If ssmtp is not found, quit now
+# Redirect errors? which ssmtp 2>&1?
+if [[ ! -f $(which ssmtp) ]]; then
+	echo "ssmtp not found! Exiting..."
+	exit 1
+fi
 
 # Check for Debian derivatives
 if [[ -f $(which apt-get) ]]; then
