@@ -20,7 +20,8 @@ fi
 # Check for Debian derivatives
 if [[ -f $(which apt-get) ]]; then
    apt-get update
-   update_result=$(apt-get --simulate dist-upgrade) # returns 0 for none available
+   # returns 0 for none available, seems to return 0 even if there are updates
+   update_result=$(apt-get --simulate dist-upgrade) 
    update_found_str="packages will be upgraded"
 	if [[ "$update_result" =~ update_found_str ]]; then
 		updates_found=true
@@ -39,6 +40,9 @@ elif [[ -f $(which yum) ]]; then
 #elif [[ -f $(which zypper) ]]; then
 # Arch
 #elif [[ -f $(which pacman) ]]; then
+#   update_result=$(pacman -Syu) #?
+# Gentoo
+#elif [[ -f $(which emerge) ]]; then
 fi
 
 #apt-get update
