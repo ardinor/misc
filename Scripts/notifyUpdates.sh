@@ -2,26 +2,38 @@
 to_email="<address>"
 from_email="<address>"
 subject="Updates found for "
+updates_found=false
+error=false
 
-#Check for other distros?
-#if [[ -f $(which apt-get) ]]
-#then
-#   apt-get update
-#   update_result=$(apt-get --simulate dist-upgrade)
-#   update_found_str="packages will be upgraded"
-#   break
-#elif [[ -f $(which yum) ]]
-#then
-#   update_result=$(yum update)
-#   update_found_str=""
-#   break
-#elif [[ -f $(which zypper) ]]
-#elif [[ -f $(which pacman) ]]
-apt-get update
-update_result=$(apt-get --simulate dist-upgrade)
+# Check for Debian derivatives
+if [[ -f $(which apt-get) ]]; then
+   apt-get update
+   update_result=$(apt-get --simulate dist-upgrade) # returns 0 for none available
+   update_found_str="packages will be upgraded"
+	if [[ "$update_result" =~ update_found_str ]]; then
+		updates_found=true
+	fi
+# Check for RHEL derivatives
+elif [[ -f $(which yum) ]]; then
+    update_result=$(yum check-update)
+	# check-update returns 100 if updates are found, 0 if not available, 1 for error
+ 	exit_value=$?
+	if [[ $exit_value -eq 100 ]]; then
+		updates_found=true
+	elif [[ $exit_value -eq 1 ]]; then
+		error=true
+	fi
+# For openSUSE/Suse Enterprise, don't have one to test this
+#elif [[ -f $(which zypper) ]]; then
+# Arch
+#elif [[ -f $(which pacman) ]]; then
+fi
 
-if [[ "$update_result" =~ "packages will be upgraded" ]]
-then
+#apt-get update
+#update_result=$(apt-get --simulate dist-upgrade)
+
+if [[ "$updates_found" = true ]]; then
+#if [[ "$update_result" =~ "packages will be upgraded" ]]; then
         hostname=$(hostname)
         uname=$(uname -a)
         uptime=$(uptime)
