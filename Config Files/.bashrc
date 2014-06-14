@@ -16,3 +16,17 @@ function man()
     LESS_TERMCAP_us=$(printf "\e[1;32m") \
     man "$@"
 }
+
+# cd and ls in one (from the Arch wiki)
+cl() {
+    dir=$1
+    if [[ -z "$dir" ]]; then
+        dir=$HOME
+    fi
+    if [[ -d "$dir" ]]; then
+        cd "$dir"
+        ls -hal --color=auto
+    else
+        echo "bash: cl: '$dir': Directory not found"
+    fi
+}
