@@ -30,3 +30,9 @@ cl() {
         echo "bash: cl: '$dir': Directory not found"
     fi
 }
+
+#mkdir and cd in one
+mkcd() {
+    mkdir -p $1
+    cd $1
+}
