@@ -1,22 +1,11 @@
  #!/bin/sh
 
-source WATCH_LIST.sh
-
-RSYNC=/usr/bin/rsync
-SSH=/usr/bin/ssh
-
-KEY=/key/location
-RUSER=<USER>
-RHOST=<HOST>
-RPORT=<PORT>
-RPATH=/remote/server
-ERROR_LOG=/path/to/error/log
+source backup_vars.sh
 
 while MODDED_DIR=$(inotifywait -r -e modify,attrib,close_write,move,create,delete -q --format %w ${DIRS[@]}); do
-    if [[ -d $MODDED_DIR ]]; then
-        BASE=$(basename $MODDED_DIR)
-    elif [[ -f $MODDED_DIR ]]; then
-        BASE=$(basename `dirname $MODDED_DIR`)		
-    fi
-	$RSYNC -az -e "$SSH -i $KEY -p $RPORT" "$MODDED_DIR" $RUSER@$RHOST:"$RPATH/$BASE" 2> $ERROR_LOG
+    NRPATH=$(dirname `readlink -m $i`)
+	# We want a directory structure like /remote/server/var/www/ so get the base path and add it to the base remote path
+    NRPATH="$RPATH$NRPATH"
+	# The directory structure should already exist as we created it in initial_backup.sh
+	$RSYNC -az -e "$SSH -i $KEY -p $RPORT" "$MODDED_DIR" $RUSER@$RHOST:"$NRPATH" 2> $ERROR_LOG
 done
