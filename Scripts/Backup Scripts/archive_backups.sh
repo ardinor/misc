@@ -14,5 +14,13 @@ ARCHIVE_MOD_SEC=$(date -d "$ARCHIVE_MOD_DATE" '+%s')
 # See if there are files in the backup directory that were created after the last backup
 if [ "$BACKUP_MOD_SEC" -gt "$ARCHIVE_MOD_SEC" ]; then
 	# If there are, make a backup archive
-	echo "Do backup"
+	# First, we only want to keep 5 backups, if there's more than 5, delete the oldest
+	ARCHIVE_COUNT=$(ls $ARCHIVE_DIR | wc -l)
+	if [ "$ARCHIVE_COUNT" -gt "5" ]; then
+		OLDEST_FILE=$(find $ARCHIVE_DIR -type f -printf '%TY-%Tm-%Td %TT %p\n' | sort | head -n 1)
+		# Example result: 2014-07-22 12:53:53.8377380540 /dir/dir2/file3
+		# Use awk to get the file path (which is the third item when split by spaces)
+		OLD_FILE_PATH=$(echo "$OLDEST_FILE" | awk '{print $3}')
+		
+	fi
 fi
