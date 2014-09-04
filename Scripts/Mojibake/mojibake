@@ -1,0 +1,52 @@
+#! /bin/sh
+# Mojibake init script
+# /etc/init.d/mojibake
+#
+
+start_as_user()
+{
+        source /opt/mojibake/bin/activate
+        cd /opt/mojibake/apps/current
+        python tornado_srv.py *> /opt/mojibake/logs/current/mojibake-init.log &
+}
+
+export -f start_as_user
+
+do_start()
+{
+        su mojibake -c start_as_user
+}
+
+do_stop()
+{
+	# SIGINT doesn't seem to work
+	# Once started the server should run with the process name 'mojibake'
+	pkill -u mojibake mojibake --signal SIGTERM
+}
+
+case "$1" in
+        start)
+                echo "Starting mojibake..."
+                do_start
+        ;;
+        stop)
+                echo "Stopping mojibake..."
+				do_stop
+        ;;
+		restart)
+				echo "Restarting mojibake..."
+				do_stop
+				do_start
+		;;
+        status)
+                echo "Status..."		
+				# Does nothing at the moment...
+        ;;
+        *)
+                echo "Usage: /etc/init.d/mojibake (start|stop|restart)"
+                exit 1
+        ;;
+esac
+
+exit 0
+
