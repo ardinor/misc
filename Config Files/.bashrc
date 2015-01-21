@@ -1,5 +1,9 @@
 # Useful additions to .bashrc I've found around the place
 
+# If you want extra safeguard when removing files add this alias
+# Maybe add a cron job to automatically delete old files in ~/.Trash?
+#alias rm='mv -t ~/.Trash'
+
 # Use launch <program>, launches a program that keeps running even if the terminal that spawned it is closed
 launch(){ disown "$1" && exit; }
 
