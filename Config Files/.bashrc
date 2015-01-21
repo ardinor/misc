@@ -1,5 +1,22 @@
 # Useful additions to .bashrc I've found around the place
 
+# makes it jordan@oneirism ~ $
+PS1='\[\e[0;32m\]\u@\h\[\e[m\] \[\e[1;34m\]\w\[\e[m\] \[\e[1;32m\]\$\[\e[m\]\[\e[1;37m\]'
+
+# Enable extended globbing
+shopt -s extglob
+
+# Enable spelling correction of directory names during completion
+shopt -s dirspell
+# Need this for the above to work it seems, replaces directory names with the results of word expansions
+shopt -s direxpand
+
+# Fix minor spelling errors when using cd
+shopt -s cdspell
+
+# Updates the size of the lines and columns when the window size changes
+shopt -s checkwinsize
+
 # Use launch <program>, launches a program that keeps running even if the terminal that spawned it is closed
 launch(){ disown "$1" && exit; }
 
