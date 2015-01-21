@@ -8,6 +8,7 @@ shopt -s extglob
 
 # Enable spelling correction of directory names during completion
 shopt -s dirspell
+
 # Need this for the above to work it seems, replaces directory names with the results of word expansions
 shopt -s direxpand
 
@@ -16,6 +17,10 @@ shopt -s cdspell
 
 # Updates the size of the lines and columns when the window size changes
 shopt -s checkwinsize
+
+# If you want extra safeguard when removing files add this alias
+# Maybe add a cron job to automatically delete old files in ~/.Trash?
+#alias rm='mv -t ~/.Trash'
 
 # Use launch <program>, launches a program that keeps running even if the terminal that spawned it is closed
 launch(){ disown "$1" && exit; }
