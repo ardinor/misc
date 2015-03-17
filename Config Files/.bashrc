@@ -1,7 +1,9 @@
 # Useful additions to .bashrc I've found around the place
 
 # makes it jordan@oneirism ~ $
-PS1='\[\e[0;32m\]\u@\h\[\e[m\] \[\e[1;34m\]\w\[\e[m\] \[\e[1;32m\]\$\[\e[m\]\[\e[1;37m\]'
+PS1='\[\e[0;32m\]\u@\h\[\e[m\] \[\e[1;34m\]\w\[\e[m\] \[\e[1;32m\]\$\[\e[m\]\[\e[1;37m\] '
+# for a red colour 'root' in root@oneirism ~ $ 
+#PS1='\[\e[0;31m\]\u@\h\[\e[m\] \[\e[1;34m\]\w\[\e[m\] \[\e[1;32m\]\$\[\e[m\]\[\e[1;37m\] '
 
 # Enable extended globbing
 shopt -s extglob
